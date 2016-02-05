@@ -1,0 +1,5 @@
+<?php
+$output = '';
+require MODX_BASE_PATH . "assets/components/payment/payeer.inc.php";
+return $output;
+?>
