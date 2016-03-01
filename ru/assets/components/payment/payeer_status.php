@@ -7,6 +7,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 {
 	if (isset($_POST['m_operation_id']) && isset($_POST['m_sign']))
 	{
+		$m_key = PAYEER_SECRET_KEY;
+		
+		$arHash = array(
+			$_POST['m_operation_id'],
+			$_POST['m_operation_ps'],
+			$_POST['m_operation_date'],
+			$_POST['m_operation_pay_date'],
+			$_POST['m_shop'],
+			$_POST['m_orderid'],
+			$_POST['m_amount'],
+			$_POST['m_curr'],
+			$_POST['m_desc'],
+			$_POST['m_status'],
+			$m_key
+		);
+
+		$sign_hash = strtoupper(hash('sha256', implode(':', $arHash)));
+		
+		if ($_POST["m_sign"] != $sign_hash)
+		{
+			if (PAYEER_EMAILERR != '')
+			{
+				$to = PAYEER_EMAILERR;
+				$subject = "Ошибка оплаты";
+				$message = "Не удалось провести платёж через систему Payeer по следующим причинам:\n\n";
+				$message .= " - Не совпадают цифровые подписи\n";
+				$message .= "\n" . $log_text;
+				$headers = "From: no-reply@" . $_SERVER['HTTP_SERVER'] . "\r\nContent-type: text/plain; charset=utf-8 \r\n";
+				mail($to, $subject, $message, $headers);
+			}
+
+			exit($_POST['m_orderid'] . '|error');
+		}
+		
 		$modx = new modX();
 		$modx->initialize('web');
 		$modx->addPackage('shopkeeper3', $modx->getOption('core_path') . 'components/shopkeeper3/model/');
@@ -15,40 +49,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 		
 		if (isset($order) && $order > 0) 
 		{
-			$m_key = PAYEER_SECRET_KEY;
-		
-			$arHash = array(
-				$_POST['m_operation_id'],
-				$_POST['m_operation_ps'],
-				$_POST['m_operation_date'],
-				$_POST['m_operation_pay_date'],
-				$_POST['m_shop'],
-				$_POST['m_orderid'],
-				$_POST['m_amount'],
-				$_POST['m_curr'],
-				$_POST['m_desc'],
-				$_POST['m_status'],
-				$m_key
-			);
-
-			$sign_hash = strtoupper(hash('sha256', implode(':', $arHash)));
-			
-			if ($_POST["m_sign"] != $sign_hash)
-			{
-				if (PAYEER_EMAILERR != '')
-				{
-					$to = PAYEER_EMAILERR;
-					$subject = "Ошибка оплаты";
-					$message = "Не удалось провести платёж через систему Payeer по следующим причинам:\n\n";
-					$message .= " - Не совпадают цифровые подписи\n";
-					$message .= "\n" . $log_text;
-					$headers = "From: no-reply@" . $_SERVER['HTTP_SERVER'] . "\r\nContent-type: text/plain; charset=utf-8 \r\n";
-					mail($to, $subject, $message, $headers);
-				}
-
-				exit($_POST['m_orderid'] . '|error');
-			}
-			
 			// проверка принадлежности ip списку доверенных ip
 			
 			$valid_ip = TRUE;
