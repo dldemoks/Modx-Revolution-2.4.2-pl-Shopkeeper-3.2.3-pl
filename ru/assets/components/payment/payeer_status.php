@@ -80,7 +80,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 				file_put_contents($_SERVER['DOCUMENT_ROOT'] . PAYEER_LOGFILE, $log_text, FILE_APPEND);
 			}
 			
-			if ($_POST['m_sign'] == $sign_hash && $_POST['m_status'] == 'success' && $valid_ip)
+			if ($_POST["m_sign"] != $sign_hash)
+			{
+				if (PAYEER_EMAILERR != '')
+				{
+					$to = PAYEER_EMAILERR;
+					$subject = "Ошибка оплаты";
+					$message = "Не удалось провести платёж через систему Payeer по следующим причинам:\n\n";
+					$message .= " - Не совпадают цифровые подписи\n";
+					$message .= "\n" . $log_text;
+					$headers = "From: no-reply@" . $_SERVER['HTTP_SERVER'] . "\r\nContent-type: text/plain; charset=utf-8 \r\n";
+					mail($to, $subject, $message, $headers);
+				}
+
+				exit($_POST['m_orderid'] . '|error');
+			}
+
+			if ($_POST['m_status'] == 'success' && $valid_ip)
 			{
 				$status = 5;
 				$change_status = $order->set('status', $status);
@@ -90,7 +106,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 					'status' => $status
 				));
 
-				echo $order_id . '|success';
+				echo $_POST['m_orderid']. '|success';
 			}
 			else
 			{
@@ -99,11 +115,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 					$to = PAYEER_EMAILERR;
 					$subject = "Ошибка оплаты";
 					$message = "Не удалось провести платёж через систему Payeer по следующим причинам:\n\n";
-					
-					if ($_POST["m_sign"] != $sign_hash)
-					{
-						$message .= " - Не совпадают цифровые подписи\n";
-					}
 					
 					if ($_POST['m_status'] != "success")
 					{
@@ -127,7 +138,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 		}
 		else 
 		{
-			echo $order_id . '|error';
+			echo $_POST['m_orderid'] . '|error';
 		}
 	}
 }
