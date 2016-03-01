@@ -33,6 +33,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
 			$sign_hash = strtoupper(hash('sha256', implode(':', $arHash)));
 			
+			if ($_POST["m_sign"] != $sign_hash)
+			{
+				if (PAYEER_EMAILERR != '')
+				{
+					$to = PAYEER_EMAILERR;
+					$subject = "Error payment";
+					$message = "Failed to make the payment through Payeer for the following reasons:\n\n";
+					$message .= " - Do not match the digital signature\n";
+					$message .= "\n" . $log_text;
+					$headers = "From: no-reply@" . $_SERVER['HTTP_SERVER'] . "\r\nContent-type: text/plain; charset=utf-8 \r\n";
+					mail($to, $subject, $message, $headers);
+				}
+
+				exit($_POST['m_orderid'] . '|error');
+			}
+			
 			// check the list of trusted ip
 			
 			$valid_ip = TRUE;
@@ -78,22 +94,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 			if (PAYEER_LOGFILE != '')
 			{	
 				file_put_contents($_SERVER['DOCUMENT_ROOT'] . PAYEER_LOGFILE, $log_text, FILE_APPEND);
-			}
-			
-			if ($_POST["m_sign"] != $sign_hash)
-			{
-				if (PAYEER_EMAILERR != '')
-				{
-					$to = PAYEER_EMAILERR;
-					$subject = "Error payment";
-					$message = "Failed to make the payment through Payeer for the following reasons:\n\n";
-					$message .= " - Do not match the digital signature\n";
-					$message .= "\n" . $log_text;
-					$headers = "From: no-reply@" . $_SERVER['HTTP_SERVER'] . "\r\nContent-type: text/plain; charset=utf-8 \r\n";
-					mail($to, $subject, $message, $headers);
-				}
-
-				exit($_POST['m_orderid'] . '|error');
 			}
 			
 			if ($_POST['m_status'] == 'success' && $valid_ip)

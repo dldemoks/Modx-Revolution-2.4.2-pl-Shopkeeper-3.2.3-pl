@@ -33,6 +33,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
 			$sign_hash = strtoupper(hash('sha256', implode(':', $arHash)));
 			
+			if ($_POST["m_sign"] != $sign_hash)
+			{
+				if (PAYEER_EMAILERR != '')
+				{
+					$to = PAYEER_EMAILERR;
+					$subject = "Ошибка оплаты";
+					$message = "Не удалось провести платёж через систему Payeer по следующим причинам:\n\n";
+					$message .= " - Не совпадают цифровые подписи\n";
+					$message .= "\n" . $log_text;
+					$headers = "From: no-reply@" . $_SERVER['HTTP_SERVER'] . "\r\nContent-type: text/plain; charset=utf-8 \r\n";
+					mail($to, $subject, $message, $headers);
+				}
+
+				exit($_POST['m_orderid'] . '|error');
+			}
+			
 			// проверка принадлежности ip списку доверенных ip
 			
 			$valid_ip = TRUE;
@@ -80,22 +96,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 				file_put_contents($_SERVER['DOCUMENT_ROOT'] . PAYEER_LOGFILE, $log_text, FILE_APPEND);
 			}
 			
-			if ($_POST["m_sign"] != $sign_hash)
-			{
-				if (PAYEER_EMAILERR != '')
-				{
-					$to = PAYEER_EMAILERR;
-					$subject = "Ошибка оплаты";
-					$message = "Не удалось провести платёж через систему Payeer по следующим причинам:\n\n";
-					$message .= " - Не совпадают цифровые подписи\n";
-					$message .= "\n" . $log_text;
-					$headers = "From: no-reply@" . $_SERVER['HTTP_SERVER'] . "\r\nContent-type: text/plain; charset=utf-8 \r\n";
-					mail($to, $subject, $message, $headers);
-				}
-
-				exit($_POST['m_orderid'] . '|error');
-			}
-
 			if ($_POST['m_status'] == 'success' && $valid_ip)
 			{
 				$status = 5;
