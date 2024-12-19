@@ -1,8 +1,8 @@
 MODX Revolution
 ======
-Модуль оплаты Payeer
+Payment module Payeer
 
-Для установки модуля скачайте и распакуйте архив.
-Далее следуйте прилагаемой инструкции
+To install the module, download and unzip the archive.
+Then follow the attached instructions.
 
-Поддержка версии CMS Modx Revolution 2.4.2-pl c модулем Shopkeeper 3.2.3-pl
+Support for CMS Modx Revolution 2.4.2-pl version with Shopkeeper 3.2.3-pl module
